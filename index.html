@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>IN/OUT Log System</title>
   <style>
     body {
@@ -37,9 +38,6 @@
     th {
       background-color: #f2f2f2;
     }
-    h3 {
-      margin-top: 50px;
-    }
   </style>
 </head>
 <body>
@@ -63,8 +61,6 @@
     <button onclick="markStatus('IN')">IN</button>
     <button onclick="markStatus('OUT')">OUT</button>
     <button onclick="clearForm()">Clear</button>
-    <button onclick="saveAsTxt()">Save as .TXT</button>
-    <button onclick="generateSummary()">Generate Summary</button>
   </div>
 
   <table id="logTable">
@@ -74,189 +70,66 @@
         <th>ID Number</th>
         <th>Status</th>
         <th>Timestamp</th>
-        <th>Duration (min)</th>
       </tr>
     </thead>
     <tbody>
-      <!-- Entries will appear here -->
+      <!-- Log entries will appear here -->
     </tbody>
   </table>
 
-  <h3>Summary Report</h3>
-  <table id="summaryTable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>ID Number</th>
-        <th>Total Duration (minutes)</th>
-        <th>Sessions Counted</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Summary data will go here -->
-    </tbody>
-  </table>
+  <script>
+    // Updated Google Apps Script Web App URL:
+    const webAppUrl = 'https://script.google.com/macros/s/AKfycbx5rulE36Zl15UB6yNOaT7ZOMz1nOzha38ggbnuPVLmduUmXlOLVTbDf-ufcTBmAnT6Dg/exec';
 
-<script>
-  // Your deployed Google Apps Script Web App URL
-  const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFl46pNnoiIVxjyIZYGYHOIYiyukbMUcMZaU7UFieygDkE2BmkKu5dBRjU740r5o-p/exec";
-
-  const lastStatusTimestamps = {};
-
-  function getTimestampObject() {
-    return new Date();
-  }
-
-  function getFormattedTimestamp(dateObj) {
-    return dateObj.toLocaleString();
-  }
-
-  async function markStatus(status) {
-    const name = document.getElementById('name').value;
-    const id = document.getElementById('idNumber').value.trim();
-    if (!name || !id) {
-      alert("Please select a name and enter ID number.");
-      return;
+    function getTimestamp() {
+      return new Date().toLocaleString();
     }
 
-    const now = getTimestampObject();
-    const nowFormatted = getFormattedTimestamp(now);
-    const key = `${name}_${id}`;
+    function markStatus(status) {
+      const name = document.getElementById('name').value;
+      const id = document.getElementById('idNumber').value.trim();
 
-    let duration = "-";
-
-    if (lastStatusTimestamps[key] && lastStatusTimestamps[key].status !== status) {
-      const diffMs = Math.abs(now - lastStatusTimestamps[key].time);
-      const diffMin = Math.round(diffMs / 60000);
-      duration = diffMin;
-
-      if (diffMin > 30) {
-        alert(`${name} exceeded 30 minutes (${diffMin} mins) between ${lastStatusTimestamps[key].status} and ${status}.`);
+      if (!name || !id) {
+        alert('Please select a name and enter ID number.');
+        return;
       }
 
-      delete lastStatusTimestamps[key];
-    } else {
-      lastStatusTimestamps[key] = { status: status, time: now };
-    }
+      const timestamp = getTimestamp();
 
-    // Append row to table
-    const tableBody = document.getElementById('logTable').getElementsByTagName('tbody')[0];
-    const newRow = tableBody.insertRow();
+      // Add entry to table
+      const tbody = document.getElementById('logTable').querySelector('tbody');
+      const newRow = tbody.insertRow();
 
-    newRow.insertCell(0).innerText = name;
-    newRow.insertCell(1).innerText = id;
-    newRow.insertCell(2).innerText = status;
-    newRow.insertCell(3).innerText = nowFormatted;
-    newRow.insertCell(4).innerText = duration;
+      newRow.insertCell(0).innerText = name;
+      newRow.insertCell(1).innerText = id;
+      newRow.insertCell(2).innerText = status;
+      newRow.insertCell(3).innerText = timestamp;
 
-    // POST data to Google Sheets web app
-    try {
-      const response = await fetch(GOOGLE_SHEET_WEB_APP_URL, {
+      // Post data to Google Apps Script Web App
+      fetch(webAppUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, id, status, duration })
+        mode: 'no-cors', // prevents CORS errors, but no response handling
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: name,
+          id: id,
+          status: status,
+          timestamp: timestamp
+        })
+      }).catch(err => {
+        console.warn('Failed to send data to Google Sheets:', err);
       });
-      const result = await response.json();
-      if (result.result !== 'success') {
-        console.error('Error saving to Google Sheets:', result.message);
-      }
-    } catch (error) {
-      console.error('Fetch error:', error);
-    }
-  }
 
-  function clearForm() {
-    document.getElementById('name').value = "";
-    document.getElementById('idNumber').value = "";
-  }
-
-  function saveAsTxt() {
-    let txt = '';
-
-    // IN/OUT Log
-    txt += '--- IN/OUT Log ---\n';
-    const logRows = document.querySelectorAll('#logTable tr');
-    logRows.forEach(row => {
-      const cols = row.querySelectorAll('th, td');
-      const rowText = [];
-      cols.forEach(col => rowText.push(col.innerText));
-      txt += rowText.join('\t') + '\n';
-    });
-
-    // Summary Table
-    txt += '\n--- Summary Report ---\n';
-    const summaryRows = document.querySelectorAll('#summaryTable tr');
-    summaryRows.forEach(row => {
-      const cols = row.querySelectorAll('th, td');
-      const rowText = [];
-      cols.forEach(col => rowText.push(col.innerText));
-      txt += rowText.join('\t') + '\n';
-    });
-
-    const blob = new Blob([txt], { type: 'text/plain' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'INOUT_Log_With_Summary.txt';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  function generateSummary() {
-    const logRows = document.querySelectorAll('#logTable tbody tr');
-    const userLogs = {};
-
-    logRows.forEach(row => {
-      const name = row.cells[0].innerText.trim();
-      const id = row.cells[1].innerText.trim();
-      const status = row.cells[2].innerText.trim();
-      const timestampStr = row.cells[3].innerText.trim();
-      const time = new Date(timestampStr);
-      const key = `${name}_${id}`;
-      if (!userLogs[key]) userLogs[key] = [];
-      userLogs[key].push({ status, time });
-    });
-
-    const summary = {};
-    for (const key in userLogs) {
-      const logs = userLogs[key].sort((a, b) => a.time - b.time);
-      let totalMinutes = 0;
-      let sessionCount = 0;
-
-      for (let i = 0; i < logs.length - 1; i++) {
-        const a = logs[i];
-        const b = logs[i + 1];
-        if (a.status !== b.status) {
-          const diffMs = Math.abs(b.time - a.time);
-          const diffMin = Math.round(diffMs / 60000);
-          totalMinutes += diffMin;
-          sessionCount++;
-          i++; // skip the next one
-        }
-      }
-
-      summary[key] = {
-        name: key.split('_')[0],
-        id: key.split('_')[1],
-        total: totalMinutes,
-        count: sessionCount
-      };
+      clearForm();
     }
 
-    const summaryBody = document.querySelector('#summaryTable tbody');
-    summaryBody.innerHTML = '';
-
-    for (const key in summary) {
-      const data = summary[key];
-      const row = summaryBody.insertRow();
-      row.insertCell(0).innerText = data.name;
-      row.insertCell(1).innerText = data.id;
-      row.insertCell(2).innerText = data.total;
-      row.insertCell(3).innerText = data.count;
+    function clearForm() {
+      document.getElementById('name').value = '';
+      document.getElementById('idNumber').value = '';
     }
-  }
-</script>
+  </script>
 
 </body>
 </html>
-
