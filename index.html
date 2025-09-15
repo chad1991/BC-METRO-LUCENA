@@ -1,135 +1,261 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>IN/OUT Log System</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 30px;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    input, select, button {
-      padding: 8px;
-      margin-top: 5px;
-      width: 300px;
-      max-width: 100%;
-    }
-    .buttons {
-      margin-top: 15px;
-    }
-    .buttons button {
-      width: 100px;
-      margin-right: 10px;
-    }
-    table {
-      margin-top: 30px;
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #999;
-      text-align: center;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-  </style>
-</head>
-<body>
-
-  <h2>IN/OUT Data Entry Log</h2>
-
-  <label for="name">Choose Name:</label>
-  <select id="name">
-    <option value="">-- Select Name --</option>
-    <option>RICHARD VERA</option>
-    <option>RICA SANTOS</option>
-    <option>ROLLY MALARDE</option>
-    <option>MARIA ENTINES</option>
-    <option>ANGEL QUIRUBIN</option>
-  </select>
-
-  <label for="idNumber">Enter ID Number:</label>
-  <input type="text" id="idNumber" placeholder="Enter ID Number" />
-
-  <div class="buttons">
-    <button onclick="markStatus('IN')">IN</button>
-    <button onclick="markStatus('OUT')">OUT</button>
-    <button onclick="clearForm()">Clear</button>
-  </div>
-
-  <table id="logTable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>ID Number</th>
-        <th>Status</th>
-        <th>Timestamp</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Log entries will appear here -->
-    </tbody>
-  </table>
-
-  <script>
-    // Updated Google Apps Script Web App URL:
-    const webAppUrl = 'https://script.google.com/macros/s/AKfycbwdzpmFfGWrAL7_yptPzzLBAzyQgKjIhd5XNhRRJ4yqfSgMEGwWM5L3CaxQVZXm2ZY5Wg/exec';
-
-    function getTimestamp() {
-      return new Date().toLocaleString();
-    }
-
-    function markStatus(status) {
-      const name = document.getElementById('name').value;
-      const id = document.getElementById('idNumber').value.trim();
-
-      if (!name || !id) {
-        alert('Please select a name and enter ID number.');
-        return;
-      }
-
-      const timestamp = getTimestamp();
-
-      // Add entry to table
-      const tbody = document.getElementById('logTable').querySelector('tbody');
-      const newRow = tbody.insertRow();
-
-      newRow.insertCell(0).innerText = name;
-      newRow.insertCell(1).innerText = id;
-      newRow.insertCell(2).innerText = status;
-      newRow.insertCell(3).innerText = timestamp;
-
-      // Post data to Google Apps Script Web App
-      fetch(webAppUrl, {
-        method: 'POST',
-        mode: 'no-cors', // prevents CORS errors, but no response handling
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: name,
-          id: id,
-          status: status,
-          timestamp: timestamp
-        })
-      }).catch(err => {
-        console.warn('Failed to send data to Google Sheets:', err);
-      });
-
-      clearForm();
-    }
-
-    function clearForm() {
-      document.getElementById('name').value = '';
-      document.getElementById('idNumber').value = '';
-    }
-  </script>
-
-</body>
-</html>
+‎<html>
+‎<head>
+‎  <title>IN/OUT Log System</title>
+‎  <style>
+‎    body {
+‎      font-family: Arial, sans-serif;
+‎      margin: 30px;
+‎    }
+‎    label {
+‎      display: block;
+‎      margin-top: 10px;
+‎    }
+‎    input, select, button {
+‎      padding: 8px;
+‎      margin-top: 5px;
+‎      width: 300px;
+‎      max-width: 100%;
+‎    }
+‎    .buttons {
+‎      margin-top: 15px;
+‎    }
+‎    .buttons button {
+‎      width: 100px;
+‎      margin-right: 10px;
+‎    }
+‎    table {
+‎      margin-top: 30px;
+‎      width: 100%;
+‎      border-collapse: collapse;
+‎    }
+‎    th, td {
+‎      padding: 10px;
+‎      border: 1px solid #999;
+‎      text-align: center;
+‎    }
+‎    th {
+‎      background-color: #f2f2f2;
+‎    }
+‎    h3 {
+‎      margin-top: 50px;
+‎    }
+‎  </style>
+‎</head>
+‎<body>
+‎
+‎  <h2>IN/OUT Data Entry Log</h2>
+‎
+‎  <label for="name">Choose Name:</label>
+‎  <select id="name">
+‎    <option value="">-- Select Name --</option>
+‎    <option>RICHARD VERA</option>
+‎    <option>RICA SANTOS</option>
+‎    <option>ROLLY MALARDE</option>
+‎    <option>MARIA ENTINES</option>
+‎    <option>ANGEL QUIRUBIN</option>
+‎  </select>
+‎
+‎  <label for="idNumber">Enter ID Number:</label>
+‎  <input type="text" id="idNumber" placeholder="Enter ID Number" />
+‎
+‎  <div class="buttons">
+‎    <button onclick="markStatus('IN')">IN</button>
+‎    <button onclick="markStatus('OUT')">OUT</button>
+‎    <button onclick="clearForm()">Clear</button>
+‎    <button onclick="saveAsTxt()">Save as .TXT</button>
+‎    <button onclick="generateSummary()">Generate Summary</button>
+‎  </div>
+‎
+‎  <!-- Log Table -->
+‎  <table id="logTable">
+‎    <thead>
+‎      <tr>
+‎        <th>Name</th>
+‎        <th>ID Number</th>
+‎        <th>Status</th>
+‎        <th>Timestamp</th>
+‎        <th>Duration (min)</th>
+‎      </tr>
+‎    </thead>
+‎    <tbody>
+‎      <!-- Entries will appear here -->
+‎    </tbody>
+‎  </table>
+‎
+‎  <!-- Summary Table -->
+‎  <h3>Summary Report</h3>
+‎  <table id="summaryTable">
+‎    <thead>
+‎      <tr>
+‎        <th>Name</th>
+‎        <th>ID Number</th>
+‎        <th>Total Duration (minutes)</th>
+‎        <th>Sessions Counted</th>
+‎      </tr>
+‎    </thead>
+‎    <tbody>
+‎      <!-- Summary data will go here -->
+‎    </tbody>
+‎  </table>
+‎
+‎  <script>
+‎    const lastStatusTimestamps = {};
+‎
+‎    function getTimestampObject() {
+‎      return new Date();
+‎    }
+‎
+‎    function getFormattedTimestamp(dateObj) {
+‎      return dateObj.toLocaleString();
+‎    }
+‎
+‎    function markStatus(status) {
+‎      const name = document.getElementById('name').value;
+‎      const id = document.getElementById('idNumber').value.trim();
+‎      if (!name || !id) {
+‎        alert("Please select a name and enter ID number.");
+‎        return;
+‎      }
+‎
+‎      const now = getTimestampObject();
+‎      const nowFormatted = getFormattedTimestamp(now);
+‎      const key = `${name}_${id}`;
+‎
+‎      const table = document.getElementById('logTable').getElementsByTagName('tbody')[0];
+‎      const newRow = table.insertRow();
+‎
+‎      const cellName = newRow.insertCell(0);
+‎      const cellID = newRow.insertCell(1);
+‎      const cellStatus = newRow.insertCell(2);
+‎      const cellTime = newRow.insertCell(3);
+‎      const cellDuration = newRow.insertCell(4);
+‎
+‎      cellName.innerText = name;
+‎      cellID.innerText = id;
+‎      cellStatus.innerText = status;
+‎      cellTime.innerText = nowFormatted;
+‎      cellDuration.innerText = "-";
+‎
+‎      const lastEntry = lastStatusTimestamps[key];
+‎
+‎      if (lastEntry && lastEntry.status !== status) {
+‎        const diffMs = Math.abs(now - lastEntry.time);
+‎        const diffMin = Math.round(diffMs / 60000);
+‎        cellDuration.innerText = diffMin;
+‎
+‎        if (diffMin > 30) {
+‎          newRow.style.color = "red";
+‎          alert(`${name} exceeded 30 minutes (${diffMin} mins) between ${lastEntry.status} and ${status}.`);
+‎        }
+‎
+‎        delete lastStatusTimestamps[key];
+‎      } else {
+‎        lastStatusTimestamps[key] = { status: status, time: now };
+‎      }
+‎
+‎      // Save to Google Sheets
+‎      fetch('https://script.google.com/macros/s/AKfycbxYQHSO_BWZ1JSx-9dij-C6vsf3DpGHQTrqV7ZIcQhIusykRYvR8dZfO1nAeCJUKluvzw/exec', {
+‎        method: 'POST',
+‎        body: JSON.stringify({ name, id, status }),
+‎        headers: { 'Content-Type': 'application/json' }
+‎      })
+‎      .then(res => res.text())
+‎      .then(response => console.log("Saved to Google Sheet:", response))
+‎      .catch(error => console.error("Error saving to Google Sheet:", error));
+‎    }
+‎
+‎    function clearForm() {
+‎      document.getElementById('name').value = "";
+‎      document.getElementById('idNumber').value = "";
+‎    }
+‎
+‎    function saveAsTxt() {
+‎      let txt = '';
+‎
+‎      // IN/OUT Log
+‎      txt += '--- IN/OUT Log ---\n';
+‎      const logRows = document.querySelectorAll('#logTable tr');
+‎      logRows.forEach(row => {
+‎        const cols = row.querySelectorAll('th, td');
+‎        const rowText = [];
+‎        cols.forEach(col => rowText.push(col.innerText));
+‎        txt += rowText.join('\t') + '\n';
+‎      });
+‎
+‎      // Summary Table
+‎      txt += '\n--- Summary Report ---\n';
+‎      const summaryRows = document.querySelectorAll('#summaryTable tr');
+‎      summaryRows.forEach(row => {
+‎        const cols = row.querySelectorAll('th, td');
+‎        const rowText = [];
+‎        cols.forEach(col => rowText.push(col.innerText));
+‎        txt += rowText.join('\t') + '\n';
+‎      });
+‎
+‎      const blob = new Blob([txt], { type: 'text/plain' });
+‎      const link = document.createElement('a');
+‎      link.href = URL.createObjectURL(blob);
+‎      link.download = 'INOUT_Log_With_Summary.txt';
+‎      document.body.appendChild(link);
+‎      link.click();
+‎      document.body.removeChild(link);
+‎    }
+‎
+‎    function generateSummary() {
+‎      const logRows = document.querySelectorAll('#logTable tbody tr');
+‎      const userLogs = {};
+‎
+‎      logRows.forEach(row => {
+‎        const name = row.cells[0].innerText.trim();
+‎        const id = row.cells[1].innerText.trim();
+‎        const status = row.cells[2].innerText.trim();
+‎        const timestampStr = row.cells[3].innerText.trim();
+‎        const time = new Date(timestampStr);
+‎        const key = `${name}_${id}`;
+‎        if (!userLogs[key]) userLogs[key] = [];
+‎        userLogs[key].push({ status, time });
+‎      });
+‎
+‎      const summary = {};
+‎      for (const key in userLogs) {
+‎        const logs = userLogs[key].sort((a, b) => a.time - b.time);
+‎        let totalMinutes = 0;
+‎        let sessionCount = 0;
+‎
+‎        for (let i = 0; i < logs.length - 1; i++) {
+‎          const a = logs[i];
+‎          const b = logs[i + 1];
+‎          if (a.status !== b.status) {
+‎            const diffMs = Math.abs(b.time - a.time);
+‎            const diffMin = Math.round(diffMs / 60000);
+‎            totalMinutes += diffMin;
+‎            sessionCount++;
+‎            i++; // skip the next one
+‎          }
+‎        }
+‎
+‎        summary[key] = {
+‎          name: key.split('_')[0],
+‎          id: key.split('_')[1],
+‎          total: totalMinutes,
+‎          count: sessionCount
+‎        };
+‎      }
+‎
+‎      const summaryBody = document.querySelector('#summaryTable tbody');
+‎      summaryBody.innerHTML = '';
+‎
+‎      for (const key in summary) {
+‎        const data = summary[key];
+‎        const row = summaryBody.insertRow();
+‎        row.insertCell(0).innerText = data.name;
+‎        row.insertCell(1).innerText = data.id;
+‎        row.insertCell(2).innerText = data.total;
+‎        row.insertCell(3).innerText = data.count;
+‎      }
+‎    }
+‎  </script>
+‎
+‎</body>
+‎</html>
